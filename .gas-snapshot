@@ -1,0 +1,7 @@
+TestERC4626Votes:testCanAddVaultWithGovernance() (gas: 330177)
+TestERC4626Votes:testCannotAchieveQuorumWithLessThan10Percent() (gas: 271923)
+TestERC4626Votes:testCannotCallOnlyGovernanceFunctions() (gas: 12785)
+TestERC4626Votes:testCannotVoteAsVault() (gas: 2668801)
+TestERC4626Votes:testVaultTokenCanVoteToRemoveItself() (gas: 680765)
+TestERC4626Votes:testVaultTokenPowerIncreasesAfterShareValueChanges() (gas: 793441)
+TestERC4626Votes:testVaultTokenVotingWorks() (gas: 738747)
