@@ -9,14 +9,14 @@ import {GovernorERC4626Aware} from "src/GovernorERC4626Aware.sol";
 
 import {MaliciousERC4626Votes} from "./MaliciousERC4626Votes.sol";
 
-contract TestERC4626Votes is Test {
-    Token t;
-    ERC4626Votes v;
-    GovernorERC4626Aware g;
+contract InitialState is Test {
+    Token internal t;
+    ERC4626Votes internal v;
+    GovernorERC4626Aware internal g;
 
     event ImportantEvent();
 
-    function setUp() public {
+    function setUp() public virtual {
         t = new Token();
         v = new ERC4626Votes(t);
         g = new GovernorERC4626Aware("Governance", t, 4, 16, 10);
@@ -25,6 +25,7 @@ contract TestERC4626Votes is Test {
         vm.roll(1000);
     }
 
+    // Helper function used in child tests
     function addVaultToGovernance(address _vault) internal {
         // Setup our tokens for voting
         t.delegate(address(this));
@@ -51,6 +52,12 @@ contract TestERC4626Votes is Test {
         // Execute the proposal
         vm.roll(block.number + 1 + g.votingPeriod());
         g.execute(targets, values, calldatas, keccak256(bytes(description)));
+    }
+}
+
+contract BasicGovernanceTests is InitialState {
+    function setUp() public override {
+        super.setUp();
     }
 
     function testCannotCallOnlyGovernanceFunctions() public {
@@ -92,19 +99,20 @@ contract TestERC4626Votes is Test {
         vm.expectRevert(bytes("Governor: proposal not successful"));
         g.execute(targets, values, calldatas, keccak256(bytes(description)));
     }
+}
 
-    function testCanAddVaultWithGovernance() public {
+contract GovernanceHasVaultState is InitialState {
+    function setUp() public override {
+        super.setUp();
         addVaultToGovernance(address(v));
+        vm.roll(block.number + 1);
+    }
 
-        // Check that vault was added
+    function testGovernanceHasVault() public {
         assertTrue(g.hasVault(address(v)));
     }
 
     function testVaultTokenVotingWorks() public {
-        // We need to add the vault as a voting token as tests run separately
-        addVaultToGovernance(address(v));
-        vm.roll(block.number + 1);
-
         // First, mint some vault tokens
         t.approve(address(v), t.balanceOf(address(this)));
         uint256 depositAmount = v.previewDeposit(t.balanceOf(address(this)));
@@ -143,10 +151,6 @@ contract TestERC4626Votes is Test {
     }
 
     function testVaultTokenCanVoteToRemoveItself() public {
-        // We need to add the vault as a voting token as tests run separately
-        addVaultToGovernance(address(v));
-        vm.roll(block.number + 1);
-
         // First, mint some vault tokens
         t.approve(address(v), t.balanceOf(address(this)));
         uint256 depositAmount = v.previewDeposit(t.balanceOf(address(this)));
@@ -186,10 +190,6 @@ contract TestERC4626Votes is Test {
     }
 
     function testVaultTokenPowerIncreasesAfterShareValueChanges() public {
-        // We need to add the vault as a voting token as tests run separately
-        addVaultToGovernance(address(v));
-        vm.roll(block.number + 1);
-
         uint256 votingPowerBeforeVault = g.getVotes(address(this), block.number - 1);
 
         // First, mint some vault tokens
@@ -238,14 +238,23 @@ contract TestERC4626Votes is Test {
         emit ImportantEvent();
         g.execute(targets, values, calldatas, keccak256(bytes(description)));
     }
+}
+
+contract GovernanceHasMaliciousVaultState is InitialState {
+    MaliciousERC4626Votes internal m;
+
+    function setUp() public override {
+        super.setUp();
+        m = new MaliciousERC4626Votes(t);
+        addVaultToGovernance(address(m));
+        vm.roll(block.number + 1);
+    }
+
+    function testGovernanceHasVault() public {
+        assertTrue(g.hasVault(address(m)));
+    }
 
     function testCannotVoteAsVault() public {
-        MaliciousERC4626Votes m = new MaliciousERC4626Votes(t);
-        addVaultToGovernance(address(m));
-
-        // Check that vault was added
-        assertTrue(g.hasVault(address(m)));
-
         m.tryToDelegateVotes();
         vm.roll(block.number + 1);
 
