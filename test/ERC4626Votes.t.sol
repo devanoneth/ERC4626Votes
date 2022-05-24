@@ -70,7 +70,7 @@ contract BasicGovernanceTests is InitialState {
 
     function testCannotAchieveQuorumWithLessThan10Percent() public {
         // Remove 91% of tokens
-        t.transfer(address(1), t.balanceOf(address(this)) * 91 / 100);
+        t.transfer(address(1), (t.balanceOf(address(this)) * 91) / 100);
 
         // Setup our tokens for voting
         t.delegate(address(this));
@@ -274,7 +274,11 @@ contract GovernanceHasMaliciousVaultState is InitialState {
 
         // Malicious vault cannot vote itself
         vm.roll(block.number + 1 + g.votingDelay());
-        vm.expectRevert(bytes("GovernorERC4626Aware: The vault cannot vote with its underlying asset tokens as that would be double voting"));
+        vm.expectRevert(
+            bytes(
+                "GovernorERC4626Aware: The vault cannot vote with its underlying asset tokens as that would be double voting"
+            )
+        );
         m.tryToCastVote(g, proposalId, 1);
 
         // But users still can
