@@ -1,5 +1,0 @@
-[default]
-remappings = ["openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/"]
-
-[ci]
-fuzz-runs = 10_000
