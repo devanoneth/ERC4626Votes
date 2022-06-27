@@ -40,13 +40,11 @@ contract GovernorERC4626Aware is
         return _cancel(targets, values, calldatas, salt);
     }
 
-    function getVotes(address account, uint256 blockNumber)
-        public
-        view
-        virtual
-        override(IGovernor, GovernorVotes)
-        returns (uint256 votes)
-    {
+    function _getVotes(
+        address account,
+        uint256 blockNumber,
+        bytes memory
+    ) internal view virtual override(Governor, GovernorVotes) returns (uint256 votes) {
         require(
             !_vaults.contains(account),
             "GovernorERC4626Aware: The vault cannot vote with its underlying asset tokens as that would be double voting"
@@ -64,12 +62,7 @@ contract GovernorERC4626Aware is
         }
     }
 
-    function proposalThreshold()
-        public
-        view
-        override(Governor, GovernorSettings)
-        returns (uint256)
-    {
+    function proposalThreshold() public view override(Governor, GovernorSettings) returns (uint256) {
         return super.proposalThreshold();
     }
 
@@ -78,12 +71,7 @@ contract GovernorERC4626Aware is
         uint256[] memory values,
         bytes[] memory calldatas,
         string memory description
-    )
-        public
-        virtual
-        override(Governor, GovernorProposalThreshold)
-        returns (uint256)
-    {
+    ) public virtual override(Governor, GovernorProposalThreshold) returns (uint256) {
         return super.propose(targets, values, calldatas, description);
     }
 
