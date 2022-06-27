@@ -54,19 +54,12 @@ contract GovernorERC4626Aware is
 
         votes = token.getPastVotes(account, blockNumber);
 
-        // If the user has no votes from the token, maybe they do from the vaults
-        if (votes == 0) {
-            uint256 length = _vaults.length();
-            for (uint256 i = 0; i < length; ) {
-                votes = IVotes(_vaults.at(i)).getPastVotes(account, blockNumber);
+        uint256 length = _vaults.length();
+        for (uint256 i = 0; i < length; ) {
+            votes += IVotes(_vaults.at(i)).getPastVotes(account, blockNumber);
 
-                if (votes != 0) {
-                    break;
-                }
-
-                unchecked {
-                    ++i;
-                }
+            unchecked {
+                ++i;
             }
         }
     }
@@ -104,7 +97,7 @@ contract GovernorERC4626Aware is
         _vaults.remove(vault);
     }
 
-    function hasVault(address vault) public virtual view returns (bool) {
+    function hasVault(address vault) public view virtual returns (bool) {
         return _vaults.contains(vault);
     }
 

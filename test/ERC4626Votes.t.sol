@@ -142,6 +142,34 @@ contract TestERC4626Votes is Test {
         g.execute(targets, values, calldatas, keccak256(bytes(description)));
     }
 
+    function testVotePowerCountsBothTokenAndVault() public {
+        // We need to add the vault as a voting token as tests run separately
+        addVaultToGovernance(address(v));
+        vm.roll(block.number + 1);
+
+        uint256 originalVotePower = g.getVotes(address(this), block.number - 1);
+
+        // First, mint some vault tokens
+        uint256 balanceToMint = t.balanceOf(address(this)) / 2;
+        t.approve(address(v), balanceToMint);
+        uint256 depositAmount = v.previewDeposit(balanceToMint);
+        v.deposit(balanceToMint, address(this));
+
+        assertEq(t.balanceOf(address(this)), balanceToMint);
+        assertEq(v.balanceOf(address(this)), depositAmount);
+
+        // Setup our tokens for voting
+        v.delegate(address(this));
+        assertEq(v.delegates(address(this)), address(this));
+        assertEq(t.delegates(address(this)), address(this));
+
+        vm.roll(block.number + 1);
+
+        uint256 newVotePower = g.getVotes(address(this), block.number - 1);
+
+        assertEq(newVotePower, originalVotePower);
+    }
+
     function testVaultTokenCanVoteToRemoveItself() public {
         // We need to add the vault as a voting token as tests run separately
         addVaultToGovernance(address(v));
